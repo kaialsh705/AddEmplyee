@@ -1,0 +1,10 @@
+import React from 'react';
+import {View, Text} from 'react-native'
+const Index = () =>{
+  return(
+    <View>
+      <Text style={{color: 'red'}}>Index Page</Text>
+    </View>
+  )
+}
+export default Index
