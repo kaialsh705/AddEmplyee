@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 
-class Blog(models.Model):
+class Employee(models.Model):
     title = models.CharField(max_length=255)
     slug = models.SlugField(unique=True)
     cover_img = models.ImageField(upload_to='images/')

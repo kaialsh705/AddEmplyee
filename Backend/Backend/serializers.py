@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from Backend.models import Blog
+from Backend.models import Employee
 
 
-class BlogSerializer(serializers.ModelSerializer):
+class EmployeeSerializer(serializers.ModelSerializer):
     cover_img = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
 
@@ -14,5 +14,5 @@ class BlogSerializer(serializers.ModelSerializer):
         return "images/"+str(obj.cover_img)
 
     class Meta:
-        model = Blog
+        model = Employee
         fields = ('id', 'title', 'slug', "cover_img", 'content', 'author_name', 'author_description', 'created_at')

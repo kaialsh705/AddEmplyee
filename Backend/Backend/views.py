@@ -1,7 +1,7 @@
 from django.contrib.auth import authenticate
 from rest_framework import permissions
 from rest_framework.views import APIView
-from .models import Blog
+from .models import Employee
 from django.http import JsonResponse
 from PIL import Image
 import io
@@ -9,11 +9,12 @@ from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import authentication, permissions
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+from .serializers import EmployeeSerializer
 
-from .serializers import BlogSerializer
 
-
-class BlogCreateView(APIView):
+class EmployeeCreateAPI(APIView):
     def post(self, request):
         title = request.data.get("title")
         slug = request.data.get("slug")
@@ -30,10 +31,10 @@ class BlogCreateView(APIView):
         if not cover_img.content_type in ['image/png', 'image/jpeg']:
             return JsonResponse({"success": False, "message": "Only PNG and JPEG formats are allowed for cover image"})
 
-        # Save Blog object in database
+        # Save Employee object in database
         try:
             image = Image.open(io.BytesIO(cover_img.read()))  # Open image file using PIL library
-            blog = Blog(
+            emp = Employee(
                 title=title,
                 slug=slug,
                 cover_img=cover_img,
@@ -41,17 +42,17 @@ class BlogCreateView(APIView):
                 author_name=author_name,
                 author_description=author_description
             )
-            blog.save()
-            return JsonResponse({"success": True, "message": "Blog saved successfully"})
+            emp.save()
+            return JsonResponse({"success": True, "message": "Employee saved successfully"})
         except Exception as e:
             return JsonResponse({"success": False, "message": "Error"})
 
 
-class GetBlogDataAPI(APIView):
+class GetEmpDataAPI(APIView):
     def get(self, request):
-        data = Blog.objects.filter().order_by("-created_at")
+        data = Employee.objects.filter().order_by("-created_at")
         context = dict()
-        context['data'] = BlogSerializer(data, many=True).data
+        context['data'] = EmployeeSerializer(data, many=True).data
         return JsonResponse(context)
 
 
@@ -65,33 +66,21 @@ class ObtainAuthToken(APIView):
     # permission_classes = [permissions.AllowAny]
 
     def get(self, request, *args, **kwargs):
-        # Get the username and password from the request data
-        # username = request.data.get('username')
-        username = 'gourav'
-        # password = request.data.get('password')
-        password = 'gourav'
+        username = 'kailash'
+        password = 'kailash'
 
         # Authenticate the user
         user = authenticate(username=username, password=password)
 
         if user:
-            print("user", user)
-            # If the user is authenticated, generate a token and return it
             token, created = Token.objects.get_or_create(user=user)
-            print("token", token)
-            print("token.key", token.key)
             return Response({'token': token.key})
         else:
             # If the user is not authenticated, return an error message
             return Response({'error': 'Invalid credentials'}, status=400)
 
-
-from django.http import JsonResponse
-from django.middleware.csrf import get_token
-
 def csrf_token_view(request):
     token = get_token(request)
-    print("token", token)
     response = JsonResponse({'csrftoken': token})
     response['Access-Control-Allow-Origin'] = '*'
     return response
