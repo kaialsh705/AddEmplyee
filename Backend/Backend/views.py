@@ -12,49 +12,67 @@ from rest_framework import authentication, permissions
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from .serializers import EmployeeSerializer
+from django.db.models import Q
 
 
 class EmployeeCreateAPI(APIView):
     def post(self, request):
-        title = request.data.get("title")
-        slug = request.data.get("slug")
-        cover_img = request.data.get("cover_img")
-        content = request.data.get("content")
-        author_name = request.data.get("author_name")
-        author_description = request.data.get("author_description")
-
-        # Check if all fields are provided
-        if not all([title, slug, cover_img, content, author_name, author_description]):
-            return JsonResponse({"success": False, 'message':"some detailsl are missing"})
-
-        # Validate image file type
-        if not cover_img.content_type in ['image/png', 'image/jpeg']:
-            return JsonResponse({"success": False, "message": "Only PNG and JPEG formats are allowed for cover image"})
-
-        # Save Employee object in database
         try:
-            image = Image.open(io.BytesIO(cover_img.read()))  # Open image file using PIL library
-            emp = Employee(
-                title=title,
-                slug=slug,
-                cover_img=cover_img,
-                content=content,
-                author_name=author_name,
-                author_description=author_description
+            first_name = request.data.get("first_name")
+            last_name = request.data.get("slug")
+            email = request.data.get("cover_img")
+            salary = request.data.get("content")
+            job_title = request.data.get("author_name")
+
+            # Check if all fields are provided
+            if not all([first_name, last_name, email, salary, job_title]):
+                return JsonResponse({"success": False, 'message': "Some details are missing"})
+
+            if Employee.objects.filter(email=email).exists():
+                return JsonResponse({"success": False, 'message': "This email already registered"})
+
+            Employee.objects.create(
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                job_title=salary,
+                salary=job_title,
             )
-            emp.save()
             return JsonResponse({"success": True, "message": "Employee saved successfully"})
         except Exception as e:
             return JsonResponse({"success": False, "message": "Error"})
 
 
-class GetEmpDataAPI(APIView):
-    def get(self, request):
-        data = Employee.objects.filter().order_by("-created_at")
+class FilterEmployee(APIView):
+    def post(self, request):
+        search_name = request.data.get('search_name')
+        data = Employee.objects.filter(Q(first_name__icontains=search_name) | Q(last_name__icontains=search_name)
+                                       | Q(first_name__search=search_name) | Q(last_name__search=search_name))
+
         context = dict()
         context['data'] = EmployeeSerializer(data, many=True).data
         return JsonResponse(context)
 
+
+class GetEmpDataAPI(APIView):
+    def get(self, request):
+        data = Employee.objects.filter().order_by("-timestamp")
+        context = dict()
+        context['data'] = EmployeeSerializer(data, many=True).data
+        return JsonResponse(context)
+
+
+class IsSavedEmployee(APIView):
+    def get(self, request):
+        email = request.data.get('email')
+        is_save_type = bool(int(request.data.get('is_save_type')))
+        data = Employee.objects.filter(email=email).first()
+        data.is_saved = is_save_type
+        data.save()
+        context = dict()
+        context['data'] = EmployeeSerializer(data).data
+        context['is_save_type'] = EmployeeSerializer(data).data
+        return JsonResponse(context)
 
 
 class ObtainAuthToken(APIView):
@@ -62,6 +80,7 @@ class ObtainAuthToken(APIView):
     API View that receives a POST with a user's username and password.
     Returns a token that can be used for authenticated requests.
     """
+
     # authentication_classes = []
     # permission_classes = [permissions.AllowAny]
 
@@ -78,6 +97,7 @@ class ObtainAuthToken(APIView):
         else:
             # If the user is not authenticated, return an error message
             return Response({'error': 'Invalid credentials'}, status=400)
+
 
 def csrf_token_view(request):
     token = get_token(request)
