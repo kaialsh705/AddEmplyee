@@ -19,10 +19,10 @@ class EmployeeCreateAPI(APIView):
     def post(self, request):
         try:
             first_name = request.data.get("first_name")
-            last_name = request.data.get("slug")
-            email = request.data.get("cover_img")
-            salary = request.data.get("content")
-            job_title = request.data.get("author_name")
+            last_name = request.data.get("last_name")
+            email = request.data.get("email")
+            salary = request.data.get("salary")
+            job_title = request.data.get("job_title")
 
             # Check if all fields are provided
             if not all([first_name, last_name, email, salary, job_title]):
@@ -31,15 +31,18 @@ class EmployeeCreateAPI(APIView):
             if Employee.objects.filter(email=email).exists():
                 return JsonResponse({"success": False, 'message': "This email already registered"})
 
-            Employee.objects.create(
+            emp = Employee.objects.create(
                 first_name=first_name,
                 last_name=last_name,
                 email=email,
-                job_title=salary,
-                salary=job_title,
+                job_title=job_title,
+                salary=salary,
             )
-            return JsonResponse({"success": True, "message": "Employee saved successfully"})
+            data = EmployeeSerializer(emp).data
+            return JsonResponse(
+                {"success": True, "message": "Employee saved successfully", 'data': data})
         except Exception as e:
+            print(str(e))
             return JsonResponse({"success": False, "message": "Error"})
 
 
@@ -57,22 +60,28 @@ class FilterEmployee(APIView):
 class GetEmpDataAPI(APIView):
     def get(self, request):
         data = Employee.objects.filter().order_by("-timestamp")
+        emp_count = Employee.objects.filter(is_saved=True).count()
         context = dict()
         context['data'] = EmployeeSerializer(data, many=True).data
+        context['emp_count'] = emp_count
         return JsonResponse(context)
 
 
 class IsSavedEmployee(APIView):
-    def get(self, request):
-        email = request.data.get('email')
-        is_save_type = bool(int(request.data.get('is_save_type')))
-        data = Employee.objects.filter(email=email).first()
-        data.is_saved = is_save_type
-        data.save()
-        context = dict()
-        context['data'] = EmployeeSerializer(data).data
-        context['is_save_type'] = EmployeeSerializer(data).data
-        return JsonResponse(context)
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            is_save_type = bool(int(request.data.get('is_save_type')))
+            data = Employee.objects.filter(email=email).first()
+            data.is_saved = is_save_type
+            data.save()
+            emp = Employee.objects.filter(is_saved=True).count()
+            print(emp)
+            return JsonResponse(
+                {"success": True, "message": "Is Saved", 'is_saved': is_save_type, 'emp_saved_count': emp})
+        except Exception as e:
+            print(str(e))
+            return JsonResponse({"success": False, "message": "Error"})
 
 
 class ObtainAuthToken(APIView):

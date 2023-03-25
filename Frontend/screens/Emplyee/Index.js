@@ -1,18 +1,59 @@
-import React from 'react';
-import {View, Text, TouchableOpacity, StyleSheet} from 'react-native'
+import React, {useEffect, useState} from 'react';
+import {View, Text, TouchableOpacity, StyleSheet, Button} from 'react-native'
 import {connect} from 'react-redux';
+import EmployeeList from "./EmployeeList";
+import {host_port} from "../../env";
+import {store} from "../../index";
+import {EMPLOYEE_DATA, IS_SAVED} from "../../Store/actions/actionTypes";
+import Loader from "./Loader";
 
 const Index = (props) => {
-    console.log("employee_data", props.employee_data)
+    const [isLoading, setIsLoading] = useState(false)
+    useEffect(() => {
+        getEmployee();
+    }, []);
+    const getEmployee = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(host_port + "get_data/", {
+                method: "GET",
+            });
+            const data = await response.json();
+            if (data?.data) {
+                store.dispatch({
+                    type: EMPLOYEE_DATA,
+                    payload: {
+                        employee_data: data.data
+                    }
+                })
+                store.dispatch({
+                    type: IS_SAVED,
+                    payload: {
+                        is_saved: data.emp_count
+                    }
+                })
+            }
+            setIsLoading(false);
+        } catch (error) {
+            setIsLoading(false);
+        }
+    };
     return (
-        <View style={styles.container}>
-            <TouchableOpacity
-                style={styles.button}
-                onPress={() => props.navigation.navigate("EmployeeList")}
-            >
-                <Text style={styles.buttonText}>Add Employee</Text>
-            </TouchableOpacity>
-        </View>
+        <React.Fragment>
+            {isLoading ? (
+                <Loader/>
+            ) : null}
+            {!isLoading && !props.employee_data?.length ? (
+                <View style={styles.container}>
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={() => props.navigation.navigate("AddEmployeeForm", {getEmployee: getEmployee})}
+                    >
+                        <Text style={styles.buttonText}>Add Employee</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : !isLoading ? <EmployeeList navigation={props.navigation}/> : null}
+        </React.Fragment>
     )
 }
 const mapStateToProps = state => {

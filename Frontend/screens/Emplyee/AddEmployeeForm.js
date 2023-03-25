@@ -12,6 +12,7 @@ import Loader from "./Loader";
 import * as yup from 'yup';
 import {Formik} from 'formik';
 import {host_port} from '../../env'
+import {connect} from "react-redux";
 
 
 const AddEmployeeForm = (props) => {
@@ -32,7 +33,8 @@ const AddEmployeeForm = (props) => {
                     "X-CSRFToken": "not-a-token",
                 },
             });
-            setToken(setToken);
+            const data = await response.json();
+            setToken(data.csrftoken);
             setIsLoad(false);
         } catch (error) {
             setIsLoad(false);
@@ -53,12 +55,12 @@ const AddEmployeeForm = (props) => {
         const data = {
             first_name: value.first_name,
             last_name: value.last_name,
-            email: value.email,
+            email: value.email_id,
             job_title: value.job_title,
             salary: value.salary
         }
         axios
-            .post(host_port + "blog/", data, {
+            .post(host_port + "employee/", data, {
                 headers: {
                     "X-CSRFToken": token,
                     Accept: "application/json",
@@ -69,7 +71,8 @@ const AddEmployeeForm = (props) => {
                 const responseData = response.data;
                 setMessage(responseData.message);
                 if (responseData.success) {
-                    // props.route.params?.getBlogs ? props.route.params.getBlogs() : null
+                    props.route.params?.getEmployee ? props.route.params.getEmployee() : null
+                    props.navigation.goBack()
                 }
             });
     };
@@ -78,14 +81,16 @@ const AddEmployeeForm = (props) => {
         <ScrollView style={styles.container}>
             {message ? (
                 <View style={styles.message}>
-                    <Text>{responseData.message}</Text>
+                    <Text>{message}</Text>
                 </View>
             ) : null}
             <Formik
                 initialValues={{
-                    username: '',
-                    password: '',
-                    new_email_id: '',
+                    first_name: '',
+                    last_name: '',
+                    job_title: '',
+                    salary: '',
+                    email_id: '',
                 }}
                 validationSchema={() =>
                     yup.lazy(values => {
@@ -150,14 +155,14 @@ const AddEmployeeForm = (props) => {
                         <Text style={styles.label}>Email *</Text>
                         <TextInput
                             style={styles.input}
-                            value={props.values.email}
-                            onChangeText={props.handleChange('email')}
+                            value={props.values.email_id}
+                            onChangeText={props.handleChange('email_id')}
                             placeholder="Email"
                             multiline={true}
                         />
-                        {props.touched.email && (
+                        {props.touched.email_id && (
                             <Text style={styles.error_msg}>
-                                {props.errors.email}
+                                {props.errors.email_id}
                             </Text>
                         )}
                         <Text style={styles.label}>Job Title *</Text>
@@ -198,7 +203,13 @@ const AddEmployeeForm = (props) => {
         </ScrollView>
     );
 };
+const mapStateToProps = state => {
+    return {
+        employee_data: state.reducer.employee_data,
+    };
+};
 
+export default connect(mapStateToProps)(AddEmployeeForm);
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -230,5 +241,3 @@ const styles = StyleSheet.create({
         color: 'red',
     },
 });
-
-export default AddEmployeeForm;

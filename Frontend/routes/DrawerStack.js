@@ -5,12 +5,19 @@ import DrawerContentIndex from '../screens/DrawerContentIndex';
 
 const Drawer = createDrawerNavigator();
 
-function DrawerNavigator(props) {
+function DrawerNavigator() {
     return (
         <Drawer.Navigator
+            screenOptions={{
+                headerTintColor: "#fff",
+                headerStyle: {
+                    backgroundColor: "green",
+                    height: 80,
+                }
+            }}
             drawerType={'slide'}
             drawerPosition={'left'}
-            drawerContent={() => <DrawerContentIndex/>}>
+            drawerContent={(props) => <DrawerContentIndex {...props} />}>
             <Drawer.Screen name="Index" component={Index}/>
         </Drawer.Navigator>
     );

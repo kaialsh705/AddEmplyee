@@ -16,7 +16,7 @@ const DrawerContentIndex = props => {
                         <Text
                             style={styles.font_color_and_family}>
                             {' '}
-                            Total Bookmarked ()
+                            Total Bookmarked ({props.is_saved ? props.is_saved : 0})
                         </Text>
                     </View>
                 </View>
@@ -25,7 +25,7 @@ const DrawerContentIndex = props => {
                         <Text
                             style={styles.font_color_and_family}>
                             {' '}
-                            Total Employee ()
+                            Total Employee ({props.employee_data?.length ? props.employee_data?.length : 0})
                         </Text>
                     </View>
                 </View>
